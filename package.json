@@ -1,0 +1,9 @@
+{
+  "name": "blockprint-monorepo",
+  "private": true,
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter blockprint test",
+    "dev": "pnpm --filter demo dev"
+  }
+}

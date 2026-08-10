@@ -1,0 +1,42 @@
+{
+  "name": "blockprint",
+  "version": "0.0.0",
+  "description": "Typed, config-driven block renderer for React. Render arbitrary UI trees from untrusted JSON with compile-time registry safety and runtime schema validation.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "keywords": [
+    "react",
+    "cms",
+    "renderer",
+    "blocks",
+    "page-builder",
+    "typescript",
+    "standard-schema"
+  ],
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10",
+    "zod": "^4.4.3"
+  }
+}
