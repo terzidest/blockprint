@@ -39,6 +39,18 @@ export interface BlockConfig {
 }
 
 /**
+ * The props a consumer may author for a definition. With a schema this is the
+ * schema's INPUT type — authored configs are pre-validation data, so fields
+ * with defaults are optional. (The component still receives the parsed
+ * output; see PropsOfDef.)
+ */
+export type InputOfDef<D> = D extends {
+  schema: StandardSchemaV1<infer I, any>;
+}
+  ? I
+  : PropsOfDef<D>;
+
+/**
  * The closed, fully typed config union for a given registry — for configs
  * authored in TypeScript rather than fetched from a CMS. Block names
  * autocomplete and props are checked per block.
@@ -49,7 +61,7 @@ export type ConfigFor<R extends Registry<BlocksShape>> =
         {
           [K in keyof T]: {
             type: K;
-            props: PropsOfDef<T[K]>;
+            props: InputOfDef<T[K]>;
             id?: string | number;
           };
         }[keyof T]

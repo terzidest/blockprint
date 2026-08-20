@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* Per-vertical theming: each preset sets a class on the preview container,
+   blocks reference only the variables. */
+.theme-commerce {
+  --accent: #b45309;
+  --accent-contrast: #ffffff;
+  --accent-soft: #fef3c7;
+  --surface: #fffbf5;
+  --ink: #292524;
+  --heading-font: Georgia, "Times New Roman", serif;
+}
+
+.theme-saas {
+  --accent: #4f46e5;
+  --accent-contrast: #ffffff;
+  --accent-soft: #e0e7ff;
+  --surface: #ffffff;
+  --ink: #111827;
+  --heading-font: ui-sans-serif, system-ui, sans-serif;
+}
+
+.theme-editorial {
+  --accent: #18181b;
+  --accent-contrast: #ffffff;
+  --accent-soft: #f4f4f5;
+  --surface: #fdfdfc;
+  --ink: #18181b;
+  --heading-font: Georgia, "Times New Roman", serif;
+}
+
+.preview-surface {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.preview-surface h1,
+.preview-surface h2,
+.preview-surface h3 {
+  font-family: var(--heading-font);
+}

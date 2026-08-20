@@ -20,6 +20,8 @@ Renders a config against a registry. `config` is `unknown` on purpose — the ou
 
 The default fallback renders a warning box in development and `null` in production.
 
+The optional `wrapBlock={(node, entry, index) => …}` prop wraps every rendered entry — blocks and fallbacks alike — with access to the config entry and its index. This is the hook point for visual-editing overlays, analytics boundaries, or per-block chrome.
+
 ### `parseConfig(input)`
 
 The boundary validator, exported for consumers who want to fail at fetch time rather than render time. Throws `ConfigError` with the entry index and reason.

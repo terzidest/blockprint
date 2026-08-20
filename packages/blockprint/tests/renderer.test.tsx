@@ -78,6 +78,41 @@ describe("Renderer", () => {
   });
 });
 
+describe("wrapBlock", () => {
+  test("wraps rendered blocks with entry and index", () => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        config={[{ type: "hero", props: { title: "Welcome" } }]}
+        registry={registry}
+        wrapBlock={(node, entry, index) => (
+          <section data-type={entry.type} data-index={index}>
+            {node}
+          </section>
+        )}
+      />,
+    );
+    expect(html).toBe(
+      '<section data-type="hero" data-index="0"><h1>Welcome</h1></section>',
+    );
+  });
+
+  test("wraps fallbacks too, so failed entries stay addressable", () => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        config={[{ type: "mystery" }]}
+        registry={registry}
+        fallback={Fallback}
+        wrapBlock={(node, entry, index) => (
+          <section data-index={index}>{node}</section>
+        )}
+      />,
+    );
+    expect(html).toBe(
+      '<section data-index="0"><div data-reason="unknown-type">mystery</div></section>',
+    );
+  });
+});
+
 describe("parseConfig", () => {
   test("rejects non-array input", () => {
     expect(() => parseConfig({})).toThrow(ConfigError);

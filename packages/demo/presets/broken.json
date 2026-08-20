@@ -1,0 +1,40 @@
+[
+  {
+    "type": "hero",
+    "props": {
+      "eyebrow": "Summer drop 24",
+      "title": "Gear that carries its weight",
+      "subtitle": "This block is fine — and everything around the broken ones keeps rendering.",
+      "ctaLabel": "Shop the collection",
+      "align": "left"
+    }
+  },
+  {
+    "type": "categoryGrd",
+    "props": {
+      "categories": [
+        { "name": "Packs", "emoji": "🎒", "count": 24 },
+        { "name": "Bottles", "emoji": "🥤", "count": 13 }
+      ]
+    }
+  },
+  {
+    "type": "featuredProducts",
+    "props": {
+      "title": "Bestsellers",
+      "products": [
+        { "name": "Ridgeline 28L", "price": "$148", "emoji": "🎒", "tag": "New" },
+        { "name": "Thermal Flask", "price": "$34", "emoji": "🥤" },
+        { "name": "Storm Shell", "price": "$189", "emoji": "🧥" },
+        { "name": "Trail Runner II", "price": "$129", "emoji": "🥾" }
+      ]
+    }
+  },
+  {
+    "type": "newsletter",
+    "props": {
+      "heading": 42,
+      "subtext": "The CMS shipped a number where a string belongs."
+    }
+  }
+]

@@ -57,17 +57,22 @@ describe("createRegistry typing", () => {
     });
   });
 
-  test("schema is the source of truth: props come from schema output", () => {
+  test("authored configs use the schema INPUT: defaulted fields are optional", () => {
     const registry = createRegistry({
       grid: {
         component: Grid,
-        // default() narrows: output always has items, input may omit it
+        // output always has items (so Grid is satisfied at registration),
+        // but authored configs may omit it — the default fills it at render
         schema: z.object({ items: z.array(z.string()).default([]) }),
       },
     });
-    type Entry = ConfigFor<typeof registry>[number];
+    type Config = ConfigFor<typeof registry>;
 
-    expectTypeOf<Entry["props"]>().toEqualTypeOf<{ items: string[] }>();
+    const config: Config = [{ type: "grid", props: {} }];
+    void config;
+    expectTypeOf<Config[number]["props"]>().toExtend<{
+      items?: string[] | undefined;
+    }>();
   });
 });
 

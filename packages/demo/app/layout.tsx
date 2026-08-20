@@ -1,16 +1,16 @@
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata = {
-  title: "blockprint demo",
-  description: "A consumer of blockprint, proving the tool works.",
+  title: "blockprint — typed, config-driven block rendering for React",
+  description:
+    "One renderer, one registry, three completely different pages from JSON — plus graceful failure when the config is broken.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "system-ui", margin: "2rem auto", maxWidth: 720 }}>
-        {children}
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }
