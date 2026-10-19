@@ -1,6 +1,6 @@
 {
   "name": "blockprint",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Typed, config-driven block renderer for React. Render arbitrary UI trees from untrusted JSON with compile-time registry safety and runtime schema validation.",
   "license": "MIT",
   "repository": {
