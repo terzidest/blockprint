@@ -2,7 +2,7 @@
 
 **Typed, config-driven block rendering for React.** Render arbitrary UI trees from CMS-controlled JSON — with compile-time safety between your components and the config, and runtime validation at the boundary.
 
-**Live demo: [blockprint.terzidest.com](https://blockprint.terzidest.com)** — three completely different pages (commerce, SaaS, editorial) from one renderer and one registry, plus a deliberately broken config showing graceful fallback. Hover a config entry to highlight the block it renders.
+**Live demo: [blockprint.terzidest.com](https://blockprint.terzidest.com)** — three completely different pages (commerce, SaaS, editorial) from one renderer and one registry, plus a deliberately broken config showing graceful fallback. Hover a config entry to highlight the block it renders — or hit **Edit** and break the config yourself; the page re-renders live and the fallback catches whatever you throw at it.
 
 ```sh
 npm install blockprint
