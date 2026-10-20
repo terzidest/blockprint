@@ -2,7 +2,11 @@
 
 **Typed, config-driven block rendering for React.** Render arbitrary UI trees from CMS-controlled JSON — with compile-time safety between your components and the config, and runtime validation at the boundary.
 
-> Status: early development. API surface is settled; demo and docs are being built out.
+**Live demo: [blockprint.terzidest.com](https://blockprint.terzidest.com)** — three completely different pages (commerce, SaaS, editorial) from one renderer and one registry, plus a deliberately broken config showing graceful fallback. Hover a config entry to highlight the block it renders.
+
+```sh
+npm install blockprint
+```
 
 ## The problem
 
@@ -43,6 +47,11 @@ const registry = createRegistry({
 - **The library ships the mechanism, not the content**: no blocks, no data fetching, no styling opinions.
 
 See [DESIGN.md](./DESIGN.md) for the full design document.
+
+## Gotchas
+
+- **`exactOptionalPropertyTypes` + zod's `.optional()`**: with that compiler flag enabled, a schema field like `z.string().optional()` produces `prop?: string | undefined`, which is not assignable to a component prop declared `prop?: string` — so the registry's compile-time check (correctly) rejects the registration. Either declare such component props as `prop?: string | undefined`, or leave the flag off in the app consuming blockprint. This is the zod/flag interaction, not a blockprint rule, but blockprint's registry check is where you'll meet it.
+- **Deployed fallbacks**: the default fallback renders a warning box in development and `null` in production. A public demo or production page that wants *visible* failure must pass its own `fallback` component.
 
 ## Repository layout
 
