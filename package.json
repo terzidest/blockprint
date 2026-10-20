@@ -5,5 +5,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter blockprint test",
     "dev": "pnpm --filter demo dev"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }

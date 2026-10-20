@@ -8,6 +8,8 @@
 npm install blockprint
 ```
 
+[![The demo's split view: JSON config on the left, the page it renders on the right, with hover-sync highlighting the hero block in both panels](docs/split-view.png)](https://blockprint.terzidest.com)
+
 ## The problem
 
 Content teams compose pages from a fixed set of block types without touching code. Consuming those configs in React usually collapses into a `switch` statement on `block.type` — every possible block imported into every page, `props` typed as `any`, unknown types crashing or silently vanishing.
@@ -39,6 +41,27 @@ const registry = createRegistry({
 - A registered component whose props don't match its schema is a **compile error on that key**, not a runtime crash.
 - Unknown block types and schema-rejected props render a configurable **fallback** — a page never crashes because the CMS shipped something unexpected.
 - Configs authored in TypeScript (not fetched) get full autocomplete via `ConfigFor<typeof registry>`.
+
+## The guarantee, visible
+
+Register a component whose props don't match its schema, and the error lands **on that block**, in plain language — not three levels deep in generic-inference soup:
+
+```ts
+const Grid = (props: { items: string[] }) => …;
+
+createRegistry({
+  grid: {
+    component: Grid,
+    schema: z.object({ wrong: z.string() }), // ⟵ error HERE:
+    // Type 'ZodObject<{ wrong: ZodString }, $strip>' is not assignable to type
+    //   '"schema output is not assignable to props of 'grid'"'
+  },
+});
+```
+
+And when bad data arrives at **runtime** instead — an unregistered block type, a number where a string belongs — the page renders everything else and routes the broken entries to your fallback:
+
+[![The broken-config demo: a typo'd block type and invalid props each render a fallback card while the rest of the page renders normally](docs/broken-config.png)](https://blockprint.terzidest.com)
 
 ## Design principles
 
