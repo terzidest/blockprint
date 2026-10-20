@@ -9,6 +9,23 @@ await page.goto(url, { waitUntil: "networkidle" });
 const results = [];
 const check = (name, ok) => results.push(`${ok ? "✅" : "❌"} ${name}`);
 
+// 0. "What is this?" overlay: opens, dispatches to Broken config, closes
+await page.getByRole("button", { name: "What is this?" }).click();
+check(
+  "overlay opens with plain-words explainer",
+  await page.getByText("rearrange those blocks").isVisible(),
+);
+await page.getByRole("button", { name: /safety net/ }).click();
+check(
+  "safety-net link switches to Broken config tab",
+  await page.getByText("Two entries are corrupt").isVisible(),
+);
+check(
+  "overlay closed after dispatch",
+  !(await page.getByText("rearrange those blocks").isVisible()),
+);
+await page.getByRole("tab", { name: "Commerce" }).click();
+
 // 1. Enter edit mode
 await page.getByRole("button", { name: "Edit" }).click();
 const textarea = page.getByLabel("Editable page config JSON");

@@ -5,6 +5,7 @@ import { parseConfig } from "blockprint";
 import { presets } from "../presets";
 import { ConfigPanel } from "./ConfigPanel";
 import { PreviewPanel } from "./PreviewPanel";
+import { WhatIsThis } from "./WhatIsThis";
 
 export type Hover = { index: number; source: "config" | "preview" } | null;
 
@@ -80,7 +81,15 @@ export function DemoShell() {
             </button>
           ))}
         </nav>
-        <div className="ml-auto flex gap-4 font-mono text-xs">
+        <div className="ml-auto flex items-center gap-4 font-mono text-xs">
+          <WhatIsThis
+            onShowBroken={() => {
+              setActiveKey("broken");
+              setEditMode(false);
+              setHover(null);
+              setError(null);
+            }}
+          />
           <a
             className="text-slate-500 hover:text-slate-900 hover:underline"
             href="https://www.npmjs.com/package/blockprint"
