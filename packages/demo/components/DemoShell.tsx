@@ -43,9 +43,22 @@ export function DemoShell() {
     return () => clearTimeout(handle);
   }, [draft, editMode, preset.key]);
 
-  const effectiveConfig = editMode
-    ? (applied[preset.key] ?? preset.config)
-    : preset.config;
+  // The working copy: reorders and applied edits survive the Edit/View
+  // toggle; Reset is the way back to the pristine preset.
+  const effectiveConfig = applied[preset.key] ?? preset.config;
+
+  const moveBlock = (index: number, delta: -1 | 1) => {
+    const entries = [...parseConfig(effectiveConfig)];
+    const target = index + delta;
+    if (target < 0 || target >= entries.length) return;
+    [entries[index], entries[target]] = [entries[target]!, entries[index]!];
+    setApplied((prev) => ({ ...prev, [preset.key]: entries }));
+    setDrafts((prev) => ({
+      ...prev,
+      [preset.key]: JSON.stringify(entries, null, 2),
+    }));
+    setHover(null);
+  };
 
   return (
     <div className="flex h-dvh flex-col bg-slate-50 text-slate-900">
@@ -119,9 +132,10 @@ export function DemoShell() {
         {/* Config: below preview on mobile, left pane on desktop */}
         <div className="order-2 min-h-0 border-t border-black/8 max-lg:h-72 lg:order-1 lg:border-t-0 lg:border-r">
           <ConfigPanel
-            config={preset.config}
+            config={effectiveConfig}
             hover={editMode ? null : hover}
             onHover={setHover}
+            onMove={moveBlock}
             editMode={editMode}
             draft={draft}
             dirty={draft !== presetJson}

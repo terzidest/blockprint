@@ -85,6 +85,7 @@ export function WhatIsThis({ onShowBroken }: { onShowBroken: () => void }) {
                 <span className="font-semibold text-slate-800">
                   Not technical?
                 </span>{" "}
+                Use the ▲▼ arrows in the left panel to rearrange the page — or{" "}
                 <button
                   onClick={() => {
                     setOpen(false);
@@ -92,7 +93,7 @@ export function WhatIsThis({ onShowBroken }: { onShowBroken: () => void }) {
                   }}
                   className="font-semibold text-sky-600 underline underline-offset-2 hover:text-sky-800"
                 >
-                  See the safety net in action →
+                  see the safety net in action →
                 </button>
               </p>
             </div>

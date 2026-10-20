@@ -71,6 +71,34 @@ check(
   (await page.locator("pre").count()) > 0,
 );
 
+// 6. Reorder arrows in view mode: move the hero down, preview follows
+const firstBlockBefore = await page
+  .locator(".preview-surface > div")
+  .first()
+  .textContent();
+await page.getByLabel("Move block down").first().click();
+await page.waitForTimeout(300);
+const firstBlockAfter = await page
+  .locator(".preview-surface > div")
+  .first()
+  .textContent();
+check(
+  "arrow reorders the rendered page (categoryGrid now first)",
+  firstBlockBefore !== firstBlockAfter && firstBlockAfter.includes("Packs"),
+);
+check(
+  "config panel order follows",
+  (await page.locator("pre").first().textContent()).includes("categoryGrid"),
+);
+await page.getByRole("button", { name: "Reset" }).click();
+await page.waitForTimeout(300);
+check(
+  "reset restores original order",
+  (
+    await page.locator(".preview-surface > div").first().textContent()
+  ).includes("Gear that carries its weight"),
+);
+
 await browser.close();
 console.log(results.join("\n"));
 if (results.some((line) => line.startsWith("❌"))) process.exit(1);

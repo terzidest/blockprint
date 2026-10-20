@@ -9,6 +9,7 @@ interface ConfigPanelProps {
   config: unknown;
   hover: Hover;
   onHover: (hover: Hover) => void;
+  onMove: (index: number, delta: -1 | 1) => void;
   editMode: boolean;
   draft: string;
   dirty: boolean;
@@ -22,6 +23,7 @@ export function ConfigPanel({
   config,
   hover,
   onHover,
+  onMove,
   editMode,
   draft,
   dirty,
@@ -39,7 +41,7 @@ export function ConfigPanel({
           config — what a CMS would send
         </p>
         <div className="flex items-center gap-2 font-sans text-[11px] font-semibold">
-          {editMode && dirty && (
+          {dirty && (
             <button
               onClick={onReset}
               className="text-slate-400 hover:text-white"
@@ -91,6 +93,9 @@ export function ConfigPanel({
               scrollTo={hover?.index === index && hover.source === "preview"}
               onEnter={() => onHover({ index, source: "config" })}
               onLeave={() => onHover(null)}
+              canUp={index > 0}
+              canDown={index < entries.length - 1}
+              onMove={(delta) => onMove(index, delta)}
             />
           ))}
         </div>
@@ -105,14 +110,20 @@ function ConfigEntry({
   scrollTo,
   onEnter,
   onLeave,
+  canUp,
+  canDown,
+  onMove,
 }: {
   json: string;
   active: boolean;
   scrollTo: boolean;
   onEnter: () => void;
   onLeave: () => void;
+  canUp: boolean;
+  canDown: boolean;
+  onMove: (delta: -1 | 1) => void;
 }) {
-  const ref = useRef<HTMLPreElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollTo) {
@@ -121,15 +132,57 @@ function ConfigEntry({
   }, [scrollTo]);
 
   return (
-    <pre
+    <div
       ref={ref}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
-      className={`mb-1.5 cursor-default overflow-x-auto rounded-lg p-2 whitespace-pre transition-colors ${
+      className={`relative mb-1.5 rounded-lg transition-colors ${
         active ? "bg-slate-700/70 ring-1 ring-sky-400" : "hover:bg-slate-800"
       }`}
     >
-      {highlightJson(json)}
-    </pre>
+      <div className="absolute top-1.5 right-1.5 flex flex-col">
+        <ArrowButton
+          label="Move block up"
+          disabled={!canUp}
+          onClick={() => onMove(-1)}
+        >
+          ▲
+        </ArrowButton>
+        <ArrowButton
+          label="Move block down"
+          disabled={!canDown}
+          onClick={() => onMove(1)}
+        >
+          ▼
+        </ArrowButton>
+      </div>
+      <pre className="cursor-default overflow-x-auto p-2 pr-7 whitespace-pre">
+        {highlightJson(json)}
+      </pre>
+    </div>
+  );
+}
+
+function ArrowButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="rounded px-1 py-0.5 text-[9px] text-slate-500 transition-colors not-disabled:hover:bg-slate-600 not-disabled:hover:text-white disabled:opacity-25"
+    >
+      {children}
+    </button>
   );
 }
