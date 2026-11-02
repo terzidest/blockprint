@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
-import type { StandardSchemaV1 } from "./standard-schema";
-import type { BlocksShape, Registry } from "./types";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
+import type { BlocksShape, Registry } from "./types.ts";
 
 /**
  * Maps every compatible entry to `unknown` (an identity when intersected) and

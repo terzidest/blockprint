@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter blockprint test
+      - run: pnpm -r typecheck
+      - run: pnpm --filter blockprint build
+      - run: pnpm --filter demo build
+
+      # Packaging smoke test: the published artifact must import in BARE Node
+      # (no bundler), and blockprint/config must work without React installed.
+      # Guards against the 0.1.1 regression (extensionless ESM imports).
+      - name: Smoke-test packed tarball
+        run: |
+          cd packages/blockprint
+          pnpm pack
+          TARBALL=$PWD/$(ls blockprint-*.tgz)
+
+          mkdir -p /tmp/smoke-main && cd /tmp/smoke-main
+          npm init -y >/dev/null
+          npm i "$TARBALL" react react-dom --silent
+          node --input-type=module -e "
+            const m = await import('blockprint');
+            if (typeof m.createRegistry !== 'function') throw new Error('createRegistry missing');
+            if (typeof m.Renderer !== 'function') throw new Error('Renderer missing');
+            console.log('main entry: ok');
+          "
+
+          mkdir -p /tmp/smoke-server && cd /tmp/smoke-server
+          npm init -y >/dev/null
+          npm i "$TARBALL" --silent --legacy-peer-deps
+          if ls node_modules | grep -q '^react$'; then
+            echo 'react must not be required for blockprint/config' && exit 1
+          fi
+          node --input-type=module -e "
+            const { parseConfig, ConfigError } = await import('blockprint/config');
+            const out = parseConfig([{ type: 'hero' }]);
+            if (out[0].type !== 'hero') throw new Error('parseConfig broken');
+            try { parseConfig({}); throw new Error('should have thrown'); }
+            catch (e) { if (!(e instanceof ConfigError)) throw e; }
+            console.log('config entry (no react): ok');
+          "

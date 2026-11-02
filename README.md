@@ -66,6 +66,7 @@ And when bad data arrives at **runtime** instead — an unregistered block type,
 ## Design principles
 
 - **Framework-agnostic**: React only. No Next.js/Remix imports anywhere in the library. The demo happens to be Next.js.
+- **Backend-friendly**: the `blockprint/config` subpath exports `parseConfig`/`ConfigError` with no React requirement, for servers that validate stored configs.
 - **Validator-agnostic**: schemas are typed against [Standard Schema](https://standardschema.dev), so zod, valibot, and arktype all work. blockprint has **zero runtime dependencies**.
 - **The library ships the mechanism, not the content**: no blocks, no data fetching, no styling opinions.
 

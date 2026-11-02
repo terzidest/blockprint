@@ -1,4 +1,4 @@
-import type { FallbackProps } from "./types";
+import type { FallbackProps } from "./types.ts";
 
 // Ambient declaration instead of @types/node: bundlers replace
 // process.env.NODE_ENV statically, and the library has no other Node surface.

@@ -1,15 +1,15 @@
 import { Fragment } from "react";
 import type { ComponentType, ReactNode } from "react";
-import type { StandardSchemaV1 } from "./standard-schema";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 import type {
   AnyComponent,
   BlockConfig,
   BlocksShape,
   FallbackProps,
   Registry,
-} from "./types";
-import { parseConfig } from "./parseConfig";
-import { DefaultFallback } from "./fallback";
+} from "./types.ts";
+import { parseConfig } from "./parseConfig.ts";
+import { DefaultFallback } from "./fallback.tsx";
 
 export interface RendererProps<T extends BlocksShape> {
   /** Untrusted input; the outer shape is validated internally. */

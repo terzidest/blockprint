@@ -62,13 +62,45 @@ The optional `wrapBlock={(node, entry, index) => …}` prop wraps every rendered
 
 The boundary validator, exported for consumers who want to fail at fetch time rather than render time. Throws `ConfigError` with the entry index and reason.
 
+### `blockprint/config` — the React-free entry point
+
+Backends that store and validate configs want exactly `parseConfig` and nothing React-shaped. The `blockprint/config` subpath exports `parseConfig`, `ConfigError`, and the `BlockConfig` / `StandardSchemaV1` types with **no React requirement** (the React peer dependency is marked optional):
+
+```ts
+// in a Node server — no react in node_modules required
+import { parseConfig, ConfigError } from "blockprint/config";
+
+app.put("/pages/:slug", (req, res) => {
+  const config = parseConfig(req.body); // throws ConfigError with entry index
+  …
+});
+```
+
+Validate structure on the server, validate props at render time in the client — the registry schemas are the real trust boundary, so the server never needs to know the blocks.
+
 ### Types
 
 - `Registry<T>` — the registry's captured shape.
 - `BlockConfig` — one untrusted config entry: `{ type: string; props?: unknown; id?: string | number }`.
 - `ConfigFor<R>` — the closed, fully typed config union for a registry, for configs authored in TypeScript. Typed as each schema's *input*, so fields with defaults are optional to write.
+- `PropsFor<R, K>` / `InputFor<R, K>` — one block type's rendered props (schema output) / authorable props (schema input). For building editors and tooling against a registry.
 - `FallbackProps` — the fallback contract.
 - `StandardSchemaV1` — re-exported for custom schema implementations.
+
+## Sharing schemas with an editor app
+
+An admin/editor app usually can't import the rendering app's registry — that would drag every block component (and its styling, routing, data hooks) into the editor bundle. The pattern that works:
+
+1. Put the **zod schemas in a shared package** (`packages/blocks-contract`), importable by both apps.
+2. The rendering app joins schemas with components at the edge: `createRegistry({ hero: { component: Hero, schema: heroSchema } })`.
+3. The editor imports only the schemas (labels, defaults, field shapes) and `blockprint/config` for structure — never the components.
+
+`PropsFor`/`InputFor` give the editor the exact prop types per block without any runtime import of the registry.
+
+## Config storage notes
+
+- **Entry-level key order is irrelevant** — the array order is the only order that matters. Storage layers that canonicalize JSON (e.g. Postgres `jsonb` reorders object keys) are fully compatible; don't be alarmed when a round-tripped config diffs at the key level.
+- `parseConfig` strips unknown entry-level keys (only `type`, `props`, `id` survive) and deliberately allows unknown `type` values — unknown block types are the renderer's fallback case, which is what makes configs forward-compatible across deploys.
 
 ## Gotchas
 

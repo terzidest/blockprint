@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import type { StandardSchemaV1 } from "./standard-schema";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 
 export type AnyComponent = ComponentType<any>;
 
@@ -67,6 +67,25 @@ export type ConfigFor<R extends Registry<BlocksShape>> =
         }[keyof T]
       >
     : never;
+
+/**
+ * The props a given block type's component receives at render time (schema
+ * OUTPUT when a schema exists). For building editors and tooling against a
+ * registry without importing its components' modules at runtime.
+ */
+export type PropsFor<
+  R extends Registry<BlocksShape>,
+  K extends keyof R["blocks"],
+> = PropsOfDef<R["blocks"][K]>;
+
+/**
+ * The props a given block type accepts when authoring a config (schema INPUT
+ * when a schema exists — defaulted fields optional).
+ */
+export type InputFor<
+  R extends Registry<BlocksShape>,
+  K extends keyof R["blocks"],
+> = InputOfDef<R["blocks"][K]>;
 
 export type FallbackProps =
   | { reason: "unknown-type"; type: string; props: unknown }
