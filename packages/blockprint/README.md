@@ -4,6 +4,8 @@
 
 **Live demo: [blockprint.terzidest.com](https://blockprint.terzidest.com)** — three completely different pages (commerce, SaaS, editorial) from one renderer and one registry, plus a deliberately broken config showing graceful fallback. · [GitHub](https://github.com/terzidest/blockprint)
 
+In production at [ethereal_nature](https://github.com/terzidest/ethereal_nature): storefront pages from DB-stored configs, an admin page editor, and server-side validation via `blockprint/config`.
+
 ## The problem
 
 Content teams compose pages from a fixed set of block types; your app receives JSON like `[{ "type": "hero", "props": { … } }, …]`. Consuming that in React usually collapses into a `switch` on `block.type` — every block imported into every page, props typed `any`, unknown types crashing the page.

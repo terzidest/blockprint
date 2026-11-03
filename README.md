@@ -1,5 +1,9 @@
 # blockprint
 
+[![npm](https://img.shields.io/npm/v/blockprint)](https://www.npmjs.com/package/blockprint)
+[![CI](https://github.com/terzidest/blockprint/actions/workflows/ci.yml/badge.svg)](https://github.com/terzidest/blockprint/actions/workflows/ci.yml)
+[![zero dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](https://www.npmjs.com/package/blockprint)
+
 **Typed, config-driven block rendering for React.** Render arbitrary UI trees from CMS-controlled JSON — with compile-time safety between your components and the config, and runtime validation at the boundary.
 
 **Live demo: [blockprint.terzidest.com](https://blockprint.terzidest.com)** — three completely different pages (commerce, SaaS, editorial) from one renderer and one registry, plus a deliberately broken config showing graceful fallback. Hover a config entry to highlight the block it renders — or hit **Edit** and break the config yourself; the page re-renders live and the fallback catches whatever you throw at it.
@@ -7,6 +11,8 @@
 ```sh
 npm install blockprint
 ```
+
+In production at [ethereal_nature](https://github.com/terzidest/ethereal_nature) — storefront pages rendered from DB-stored configs, an admin page editor, and server-side config validation via `blockprint/config`.
 
 [![The demo's split view: JSON config on the left, the page it renders on the right, with hover-sync highlighting the hero block in both panels](docs/split-view.png)](https://blockprint.terzidest.com)
 
