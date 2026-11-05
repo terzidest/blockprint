@@ -60,6 +60,26 @@ The default fallback renders a warning box in development and `null` in producti
 
 The optional `wrapBlock={(node, entry, index) => …}` prop wraps every rendered entry — blocks and fallbacks alike — with access to the config entry and its index. This is the hook point for visual-editing overlays, analytics boundaries, or per-block chrome.
 
+A common recipe — shared section chrome, deep-link anchors, and analytics attributes in one place instead of repeated in every block:
+
+```tsx
+<Renderer
+  config={config}
+  registry={registry}
+  wrapBlock={(node, entry) => (
+    <section
+      id={entry.id ? String(entry.id) : undefined}   // anchor: /page#hero-1
+      data-block={entry.type}                        // analytics / e2e hooks
+      className="mx-auto max-w-5xl px-6 py-10"
+    >
+      {node}
+    </section>
+  )}
+/>
+```
+
+Rendering and schema validation are memoised per `(config, registry)` identity — keep the config referentially stable across renders (state, loader data, `useMemo`) to benefit. Duplicate `id`s warn in development and render under collision-safe keys.
+
 ### `parseConfig(input)`
 
 The boundary validator, exported for consumers who want to fail at fetch time rather than render time. Throws `ConfigError` with the entry index and reason.

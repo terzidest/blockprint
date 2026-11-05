@@ -113,6 +113,21 @@ describe("wrapBlock", () => {
   });
 });
 
+describe("duplicate ids", () => {
+  test("entries with the same id both render, under collision-safe keys", () => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        config={[
+          { type: "plain", props: { title: "First" }, id: "x" },
+          { type: "plain", props: { title: "Second" }, id: "x" },
+        ]}
+        registry={registry}
+      />,
+    );
+    expect(html).toBe("<h1>First</h1><h1>Second</h1>");
+  });
+});
+
 describe("parseConfig", () => {
   test("rejects non-array input", () => {
     expect(() => parseConfig({})).toThrow(ConfigError);

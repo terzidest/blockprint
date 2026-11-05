@@ -29,6 +29,12 @@ jobs:
       - name: Smoke-test packed tarball
         run: |
           cd packages/blockprint
+          if grep -rEq 'from\s+"\./[^"]+\.tsx?"' dist/*.d.ts; then
+            echo 'declaration files contain raw .ts/.tsx specifiers' && exit 1
+          fi
+          if ls dist | grep -Eq 'chunk|\.map$'; then
+            echo 'dist contains stale build artifacts' && exit 1
+          fi
           pnpm pack
           TARBALL=$PWD/$(ls blockprint-*.tgz)
 
