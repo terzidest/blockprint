@@ -1,4 +1,8 @@
-import { Component, Fragment, useMemo } from "react";
+import { Fragment, useMemo } from "react";
+// Namespace import: React.Component must only be touched lazily — the
+// react-server condition's build exports useMemo/Fragment but NOT Component,
+// and the main entry must stay loadable from Server Components.
+import * as React from "react";
 import type { ComponentType, ReactNode } from "react";
 import type {
   AnyComponent,
@@ -12,8 +16,9 @@ import { validateProps } from "./validateProps.ts";
 import { DefaultFallback } from "./fallback.tsx";
 import { isDev } from "./env.ts";
 
-// StrictMode double-invokes render (and therefore the memo) in development;
-// remember what we've already warned about so each duplicate id logs once.
+// Module-global on purpose: this is a config-authoring diagnostic, not a
+// per-instance signal — a second Renderer repeating the same duplicate id
+// will not re-warn. StrictMode double-invokes are deduped by the same set.
 const warnedDuplicateIds = new Set<string | number>();
 
 export type FallbackInfo = FallbackProps & { index: number };
@@ -30,11 +35,12 @@ export interface RendererProps<T extends BlocksShape> {
    */
   wrapBlock?: (node: ReactNode, entry: BlockConfig, index: number) => ReactNode;
   /**
-   * Telemetry hook, invoked synchronously whenever an entry resolves to a
-   * fallback (and from the error boundary for render errors). Synchronous so
-   * it works in Server Components; expect one invocation per environment
-   * (server render + client hydration) and doubled calls under StrictMode —
-   * dedupe downstream if exactness matters.
+   * Telemetry hook for entries that resolve to a fallback (and render errors
+   * caught by catchBlockErrors). Invoked synchronously so it works in Server
+   * Components, and deduped per Renderer instance on (reason, type, index) —
+   * so unstable config identities don't re-fire it. Expect one call per
+   * environment (server render + client hydration), and possible doubling
+   * under StrictMode in development.
    */
   onFallback?: (info: FallbackInfo) => void;
   /**
@@ -46,9 +52,10 @@ export interface RendererProps<T extends BlocksShape> {
   /**
    * Wrap every block in an error boundary: a block that throws while
    * rendering becomes a `render-error` fallback instead of taking the page
-   * down. Client-side containment only — React error boundaries do not catch
-   * during server rendering, and class boundaries require a client
-   * environment, so enable this from a client component.
+   * down, and recovers when the entry changes. Client-side containment only —
+   * React error boundaries do not catch during server rendering, and class
+   * boundaries do not exist in Server Components, so enabling this outside a
+   * client environment throws a descriptive error.
    */
   catchBlockErrors?: boolean;
 }
@@ -75,7 +82,7 @@ type PreparedEntry = { key: string | number; entry: BlockConfig } & (
 function prepare(
   config: unknown,
   registry: Registry<BlocksShape>,
-  onFallback?: (info: FallbackInfo) => void,
+  emitFallback: (info: FallbackInfo) => void,
 ): PreparedEntry[] {
   const entries = parseConfig(config);
   const seenKeys = new Set<string | number>();
@@ -94,7 +101,7 @@ function prepare(
     seenKeys.add(key);
 
     const toFallback = (fallbackProps: FallbackProps): PreparedEntry => {
-      onFallback?.({ ...fallbackProps, index });
+      emitFallback({ ...fallbackProps, index });
       return { key, entry, kind: "fallback", fallbackProps };
     };
 
@@ -128,27 +135,69 @@ function prepare(
 }
 
 interface BoundaryProps {
+  /** New identity resets a caught error, so edited entries get retried. */
+  resetKey: unknown;
   renderFallback: (error: unknown) => ReactNode;
   onError?: (error: unknown) => void;
-  children: ReactNode;
+  children?: ReactNode;
 }
 
-class BlockBoundary extends Component<BoundaryProps, { error?: unknown }> {
-  override state: { error?: unknown } = {};
+interface BoundaryState {
+  hasError: boolean;
+  error?: unknown;
+}
 
-  static getDerivedStateFromError(error: unknown) {
-    return { error };
+interface BoundaryInstance {
+  props: BoundaryProps;
+  state: BoundaryState;
+  setState(state: BoundaryState): void;
+  render(): ReactNode;
+}
+
+let LazyBoundary: ComponentType<BoundaryProps> | undefined;
+
+/**
+ * The boundary class is created on first use so React.Component is never
+ * touched at module load — the react-server build doesn't export it.
+ */
+function getBlockBoundary(): ComponentType<BoundaryProps> {
+  if (LazyBoundary) return LazyBoundary;
+
+  const Base = (React as unknown as Record<string, unknown>).Component as
+    | (new (props: BoundaryProps) => BoundaryInstance)
+    | undefined;
+  if (typeof Base !== "function") {
+    throw new Error(
+      "blockprint: catchBlockErrors requires a client React environment — error boundaries are not available in Server Components",
+    );
   }
 
-  override componentDidCatch(error: unknown) {
-    this.props.onError?.(error);
+  class BlockBoundary extends Base {
+    state: BoundaryState = { hasError: false };
+
+    static getDerivedStateFromError(error: unknown): BoundaryState {
+      return { hasError: true, error };
+    }
+
+    componentDidCatch(error: unknown) {
+      this.props.onError?.(error);
+    }
+
+    componentDidUpdate(previous: BoundaryProps) {
+      if (this.state.hasError && previous.resetKey !== this.props.resetKey) {
+        this.setState({ hasError: false, error: undefined });
+      }
+    }
+
+    render() {
+      return this.state.hasError
+        ? this.props.renderFallback(this.state.error)
+        : this.props.children;
+    }
   }
 
-  override render() {
-    return "error" in this.state
-      ? this.props.renderFallback(this.state.error)
-      : this.props.children;
-  }
+  LazyBoundary = BlockBoundary as unknown as ComponentType<BoundaryProps>;
+  return LazyBoundary;
 }
 
 export function Renderer<T extends BlocksShape>({
@@ -162,13 +211,24 @@ export function Renderer<T extends BlocksShape>({
 }: RendererProps<T>): ReactNode {
   const Fallback = fallback ?? DefaultFallback;
 
+  // Per-instance dedupe for onFallback: unstable config identities (inline
+  // arrays, `x ?? []`) re-run the memo, but telemetry fires at most once per
+  // (reason, type, index) for the life of this Renderer instance.
+  const firedFallbacks = useMemo(() => new Set<string>(), []);
+
   // Parsing and schema validation run once per (config, registry) identity.
   // onFallback is deliberately not a dependency: it is only invoked inside a
   // recompute, which always closes over the current render's value — listing
   // it would defeat the memo for inline callbacks.
   const prepared = useMemo(() => {
+    const emitFallback = (info: FallbackInfo) => {
+      const dedupeKey = `${info.reason}:${info.type}:${info.index}`;
+      if (firedFallbacks.has(dedupeKey)) return;
+      firedFallbacks.add(dedupeKey);
+      onFallback?.(info);
+    };
     try {
-      return { entries: prepare(config, registry, onFallback) };
+      return { entries: prepare(config, registry, emitFallback) };
     } catch (error) {
       if (error instanceof ConfigError) return { configError: error };
       throw error;
@@ -181,6 +241,8 @@ export function Renderer<T extends BlocksShape>({
     throw prepared.configError;
   }
 
+  const Boundary = catchBlockErrors ? getBlockBoundary() : undefined;
+
   return prepared.entries.map((item, index) => {
     let node: ReactNode =
       item.kind === "block" ? (
@@ -189,9 +251,10 @@ export function Renderer<T extends BlocksShape>({
         <Fallback {...item.fallbackProps} />
       );
 
-    if (catchBlockErrors && item.kind === "block") {
+    if (Boundary && item.kind === "block") {
       node = (
-        <BlockBoundary
+        <Boundary
+          resetKey={item.entry}
           renderFallback={(error) => (
             <Fallback
               reason="render-error"
@@ -200,18 +263,21 @@ export function Renderer<T extends BlocksShape>({
               error={error}
             />
           )}
-          onError={(error) =>
+          onError={(error) => {
+            const dedupeKey = `render-error:${item.entry.type}:${index}`;
+            if (firedFallbacks.has(dedupeKey)) return;
+            firedFallbacks.add(dedupeKey);
             onFallback?.({
               reason: "render-error",
               type: item.entry.type,
               props: item.entry.props,
               error,
               index,
-            })
-          }
+            });
+          }}
         >
           {node}
-        </BlockBoundary>
+        </Boundary>
       );
     }
 

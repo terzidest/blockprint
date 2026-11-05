@@ -60,9 +60,11 @@ The default fallback renders a warning box in development and `null` in producti
 
 Fail-soft options:
 
-- `onFallback={(info) => …}` — telemetry hook, invoked synchronously whenever an entry falls back (reason, type, props, index). Synchronous so it works in Server Components; expect one call per environment (server + hydration) and doubled calls under StrictMode — dedupe downstream if exactness matters.
+- `onFallback={(info) => …}` — telemetry hook for entries that fall back (reason, type, props, index). Invoked synchronously so it works in Server Components, and deduped per Renderer instance on `(reason, type, index)` — unstable config identities don't re-fire it. Expect one call per environment (server + hydration) and possible doubling under StrictMode in development.
 - `invalidConfigFallback={<ErrorState />}` — rendered instead of throwing when the outer config shape is invalid. Without it the Renderer throws `ConfigError`, so boundary-less apps fail loudly rather than silently blank.
-- `catchBlockErrors` — wraps each block in an error boundary: a block that throws while rendering becomes a `render-error` fallback instead of taking the page down. **Client-side containment only**: React error boundaries do not catch during server rendering, so enable this from a client component; SSR totality remains your blocks' responsibility.
+- `catchBlockErrors` — wraps each block in an error boundary: a block that throws while rendering becomes a `render-error` fallback instead of taking the page down, and recovers when its entry changes. **Client-side containment only**: React error boundaries do not catch during server rendering and do not exist in Server Components (enabling this there throws a descriptive error); SSR totality remains your blocks' responsibility.
+
+> **Upgrading from ≤ 0.2**: `FallbackProps` gained a third member, `{ reason: "render-error", error }`. Custom fallbacks that narrowed with a two-way ternary must handle it — switch on `reason` exhaustively. See [CHANGELOG](https://github.com/terzidest/blockprint/blob/main/CHANGELOG.md).
 
 The optional `wrapBlock={(node, entry, index) => …}` prop wraps every rendered entry — blocks and fallbacks alike — with access to the config entry and its index. This is the hook point for visual-editing overlays, analytics boundaries, or per-block chrome.
 

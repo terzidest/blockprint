@@ -45,6 +45,12 @@ jobs:
             if (typeof m.Renderer !== 'function') throw new Error('Renderer missing');
             console.log('main entry: ok');
           "
+          # The main entry must stay loadable from React Server Components —
+          # the react-server build exports no Component class (0.3.0 regression).
+          node --conditions=react-server --input-type=module -e "
+            await import('blockprint');
+            console.log('react-server load: ok');
+          "
 
           mkdir -p /tmp/smoke-server && cd /tmp/smoke-server
           npm init -y >/dev/null
@@ -53,10 +59,31 @@ jobs:
             echo 'react must not be required for blockprint/config' && exit 1
           fi
           node --input-type=module -e "
-            const { parseConfig, ConfigError } = await import('blockprint/config');
+            const { parseConfig, ConfigError, defineBlock, validateConfig } = await import('blockprint/config');
             const out = parseConfig([{ type: 'hero' }]);
             if (out[0].type !== 'hero') throw new Error('parseConfig broken');
             try { parseConfig({}); throw new Error('should have thrown'); }
             catch (e) { if (!(e instanceof ConfigError)) throw e; }
+            const m = { hero: defineBlock({ schema: { '~standard': { version: 1, vendor: 't', validate: (v) => ({ value: v }) } } }) };
+            const report = validateConfig(m, [{ type: 'hero' }, { type: 'nope' }]);
+            if (!report.ok || report.unknownTypes[0] !== 'nope') throw new Error('validateConfig broken');
             console.log('config entry (no react): ok');
           "
+          # blockprint/config must TYPECHECK without @types/react installed,
+          # with skipLibCheck off and exactOptionalPropertyTypes on.
+          npm i typescript --silent
+          cat > check.ts <<'TS'
+          import { defineBlock, validateConfig, parseConfig } from "blockprint/config";
+          import type { StandardSchemaV1, InputOf, OutputOf } from "blockprint/config";
+          const schema: StandardSchemaV1<{ t?: string }, { t: string }> = {
+            "~standard": { version: 1, vendor: "t", validate: (v) => ({ value: v as { t: string } }) },
+          };
+          const hero = defineBlock({ schema, defaults: {}, summary: (p) => p.t });
+          const input: InputOf<typeof hero> = {};
+          const output: OutputOf<typeof hero> = { t: "x" };
+          const report = validateConfig({ hero }, [{ type: "hero", props: {} }]);
+          if (!report.ok) parseConfig([]);
+          export { input, output };
+          TS
+          npx tsc --strict --exactOptionalPropertyTypes --module nodenext --moduleResolution nodenext --target es2022 --noEmit check.ts
+          echo 'config typecheck (no @types/react): ok'
