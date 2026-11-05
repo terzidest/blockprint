@@ -14,21 +14,22 @@ consumer pull, not ambition.
 - Duplicate `id`s: dev warning, collision-safe React keys.
 - `wrapBlock` section-chrome recipe documented.
 
-## 0.3.0 — the manifest release
+## 0.3.0 — the manifest release (shipped)
 
 The headline: block definitions importable **without components**, so admins,
 servers, and tests stop re-declaring every block.
 
 - `defineBlock({ schema, label?, defaults?, summary?, fields?, version? })`,
-  importable from `blockprint/config` (React-free).
-- `createRegistry(manifest, components)` — binds components to a manifest;
-  the existing single-argument form remains.
-- Headless `validateConfig(manifest, config)` returning per-entry
-  `{ entry, ok, value | issues }` — one function for save-time validation,
-  tests, loaders, and editors.
-- Fail-soft: `onFallback(info)` telemetry hook; opt-in per-block error
-  boundary (client-side containment — SSR totality stays the consumer's
-  job and is documented honestly); non-throwing mode for the outer shape.
+  importable from `blockprint/config` (React-free — the whole config
+  declaration chain resolves without `@types/react` installed).
+- `createRegistry(manifest, components)` — binds components to a manifest
+  with per-key checking via contravariance; the single-argument form remains.
+- Headless, total `validateConfig(manifest, config)` — never throws; unknown
+  types classified but not counted as failure (caller's policy); duplicate
+  ids reported. The Renderer shares the same per-entry semantics.
+- Fail-soft: `onFallback(info)` (synchronous, RSC-compatible), opt-in
+  `catchBlockErrors` boundary adding the `render-error` fallback reason
+  (client-only, documented), `invalidConfigFallback` for the outer shape.
 
 ## 0.4.0 — documents and data
 

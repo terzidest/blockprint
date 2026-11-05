@@ -58,6 +58,12 @@ Renders a config against a registry. `config` is `unknown` on purpose — the ou
 
 The default fallback renders a warning box in development and `null` in production — a page that wants visible failure in production must pass its own `fallback`.
 
+Fail-soft options:
+
+- `onFallback={(info) => …}` — telemetry hook, invoked synchronously whenever an entry falls back (reason, type, props, index). Synchronous so it works in Server Components; expect one call per environment (server + hydration) and doubled calls under StrictMode — dedupe downstream if exactness matters.
+- `invalidConfigFallback={<ErrorState />}` — rendered instead of throwing when the outer config shape is invalid. Without it the Renderer throws `ConfigError`, so boundary-less apps fail loudly rather than silently blank.
+- `catchBlockErrors` — wraps each block in an error boundary: a block that throws while rendering becomes a `render-error` fallback instead of taking the page down. **Client-side containment only**: React error boundaries do not catch during server rendering, so enable this from a client component; SSR totality remains your blocks' responsibility.
+
 The optional `wrapBlock={(node, entry, index) => …}` prop wraps every rendered entry — blocks and fallbacks alike — with access to the config entry and its index. This is the hook point for visual-editing overlays, analytics boundaries, or per-block chrome.
 
 A common recipe — shared section chrome, deep-link anchors, and analytics attributes in one place instead of repeated in every block:
@@ -83,6 +89,58 @@ Rendering and schema validation are memoised per `(config, registry)` identity �
 ### `parseConfig(input)`
 
 The boundary validator, exported for consumers who want to fail at fetch time rather than render time. Throws `ConfigError` with the entry index and reason.
+
+### Manifests — block definitions without components
+
+When more than one app needs to know your blocks (an admin, a server, tests), define them once, component-free, and join components only where rendering happens:
+
+```ts
+// packages/blocks-contract — imports blockprint/config only, no React
+import { defineBlock } from "blockprint/config";
+
+export const hero = defineBlock({
+  schema: heroSchema,                       // required; the manifest's reason to exist
+  label: "Hero",
+  defaults: { title: "A headline…" },       // typed as the schema's INPUT
+  summary: (props) => props.title,          // receives the schema's OUTPUT
+  fields: { title: { label: "Headline" } }, // shallow editor metadata, uninterpreted
+});
+
+export const manifest = { hero, categoryTiles, productStrip };
+```
+
+```tsx
+// the rendering app — the only place components exist
+import { createRegistry } from "blockprint";
+import { manifest } from "@yours/blocks-contract";
+
+const registry = createRegistry(manifest, {
+  hero: Hero,
+  categoryTiles: CategoryTiles,
+  productStrip: ProductStrip,
+});
+```
+
+The join is checked per key: a component requiring a prop its schema doesn't produce, a missing component, or an extra component are all compile errors on the offending key. Editors and servers import the manifest (labels, defaults, summaries, `InputOf`/`OutputOf` types) and never touch component modules.
+
+### `validateConfig(manifest, config)` — headless, total
+
+Per-entry validation for save endpoints, tests, loaders, and editors. **Never throws:**
+
+```ts
+import { validateConfig } from "blockprint/config";
+
+const report = validateConfig(manifest, untrustedInput);
+report.ok;           // outer shape valid and no entry failed validation
+report.error;        // outer-shape failure message, if any
+report.entries;      // per entry: { ok: true, value } | { ok: false, reason, issues? }
+report.unknownTypes; // distinct unregistered types — NOT counted as failure:
+                     // unknown blocks are the renderer's fallback case, and
+                     // whether to accept them is the caller's policy
+report.duplicateIds; // ids appearing more than once
+```
+
+The Renderer applies the same per-entry semantics, so what validates at save time is what renders.
 
 ### `blockprint/config` — the React-free entry point
 

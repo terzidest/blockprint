@@ -128,6 +128,45 @@ describe("duplicate ids", () => {
   });
 });
 
+describe("fail-soft", () => {
+  test("onFallback fires synchronously for unknown types and invalid props", () => {
+    const events: Array<{ reason: string; index: number }> = [];
+    renderToStaticMarkup(
+      <Renderer
+        config={[
+          { type: "hero", props: { title: "ok" } },
+          { type: "mystery" },
+          { type: "hero", props: { title: 42 } },
+        ]}
+        registry={registry}
+        fallback={Fallback}
+        onFallback={(info) => events.push({ reason: info.reason, index: info.index })}
+      />,
+    );
+    expect(events).toEqual([
+      { reason: "unknown-type", index: 1 },
+      { reason: "invalid-props", index: 2 },
+    ]);
+  });
+
+  test("invalidConfigFallback renders instead of throwing", () => {
+    const html = renderToStaticMarkup(
+      <Renderer
+        config={{ not: "an array" }}
+        registry={registry}
+        invalidConfigFallback={<p>broken page config</p>}
+      />,
+    );
+    expect(html).toBe("<p>broken page config</p>");
+  });
+
+  test("without invalidConfigFallback, invalid outer shape still throws", () => {
+    expect(() =>
+      renderToStaticMarkup(<Renderer config={42} registry={registry} />),
+    ).toThrow("config must be an array");
+  });
+});
+
 describe("parseConfig", () => {
   test("rejects non-array input", () => {
     expect(() => parseConfig({})).toThrow(ConfigError);

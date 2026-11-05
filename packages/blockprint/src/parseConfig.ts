@@ -1,4 +1,4 @@
-import type { BlockConfig } from "./types.ts";
+import type { BlockConfig } from "./block-config.ts";
 
 export class ConfigError extends Error {
   constructor(message: string) {

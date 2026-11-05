@@ -12,12 +12,18 @@ export function FallbackCard(props: FallbackProps) {
         <p className="text-sm font-bold text-red-700">
           {props.reason === "unknown-type"
             ? `Unknown block type: "${props.type}"`
-            : `Invalid props for "${props.type}"`}
+            : props.reason === "render-error"
+              ? `Block "${props.type}" crashed while rendering`
+              : `Invalid props for "${props.type}"`}
         </p>
         {props.reason === "unknown-type" ? (
           <p className="mt-1 text-sm text-red-600/80">
             No component is registered under this name — likely a typo in the
             CMS. The page keeps rendering; this block falls back.
+          </p>
+        ) : props.reason === "render-error" ? (
+          <p className="mt-1 text-sm text-red-600/80">
+            {props.error instanceof Error ? props.error.message : String(props.error)}
           </p>
         ) : (
           <ul className="mt-1 space-y-0.5 text-sm text-red-600/80">

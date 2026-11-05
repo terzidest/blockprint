@@ -9,7 +9,11 @@ export function DefaultFallback(props: FallbackProps) {
   const detail =
     props.reason === "invalid-props"
       ? props.issues.map((issue) => issue.message).join("; ")
-      : "no component registered for this type";
+      : props.reason === "render-error"
+        ? props.error instanceof Error
+          ? props.error.message
+          : String(props.error)
+        : "no component registered for this type";
 
   return (
     <div

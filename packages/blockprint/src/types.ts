@@ -27,16 +27,7 @@ export interface Registry<T extends BlocksShape> {
   readonly blocks: T;
 }
 
-/**
- * A single entry as it arrives from a CMS. Deliberately open: `type` is any
- * string, because untrusted configs may contain types the registry has never
- * seen — those route to the fallback instead of crashing.
- */
-export interface BlockConfig {
-  type: string;
-  props?: unknown;
-  id?: string | number;
-}
+export type { BlockConfig } from "./block-config.ts";
 
 /**
  * The props a consumer may author for a definition. With a schema this is the
@@ -94,4 +85,11 @@ export type FallbackProps =
       type: string;
       props: unknown;
       issues: ReadonlyArray<StandardSchemaV1.Issue>;
+    }
+  | {
+      /** A block component threw while rendering (catchBlockErrors only). */
+      reason: "render-error";
+      type: string;
+      props: unknown;
+      error: unknown;
     };
