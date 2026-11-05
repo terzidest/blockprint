@@ -10,8 +10,11 @@ import type {
 } from "./types.ts";
 import { parseConfig } from "./parseConfig.ts";
 import { DefaultFallback } from "./fallback.tsx";
+import { isDev } from "./env.ts";
 
-declare const process: { env: { NODE_ENV?: string } };
+// StrictMode double-invokes render (and therefore the memo) in development;
+// remember what we've already warned about so each duplicate id logs once.
+const warnedDuplicateIds = new Set<string | number>();
 
 export interface RendererProps<T extends BlocksShape> {
   /** Untrusted input; the outer shape is validated internally. */
@@ -55,7 +58,8 @@ function prepare(
   return entries.map((entry, index) => {
     let key = entry.id ?? `${entry.type}-${index}`;
     if (seenKeys.has(key)) {
-      if (process.env.NODE_ENV !== "production") {
+      if (isDev() && !warnedDuplicateIds.has(key)) {
+        warnedDuplicateIds.add(key);
         console.warn(
           `blockprint: duplicate block id "${key}" at config[${index}]; ids should be unique per config`,
         );

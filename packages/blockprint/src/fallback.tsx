@@ -1,11 +1,8 @@
 import type { FallbackProps } from "./types.ts";
-
-// Ambient declaration instead of @types/node: bundlers replace
-// process.env.NODE_ENV statically, and the library has no other Node surface.
-declare const process: { env: { NODE_ENV?: string } };
+import { isDev } from "./env.ts";
 
 export function DefaultFallback(props: FallbackProps) {
-  if (process.env.NODE_ENV === "production") {
+  if (!isDev()) {
     return null;
   }
 

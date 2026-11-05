@@ -7,6 +7,8 @@ for (const file of readdirSync(dir)) {
   if (!file.endsWith(".d.ts")) continue;
   const path = new URL(file, dir);
   const source = readFileSync(path, "utf8");
-  const fixed = source.replace(/(from\s+")(\.\.?\/[^"]+)\.tsx?(")/g, "$1$2.js$3");
+  const fixed = source
+    .replace(/(from\s+")(\.\.?\/[^"]+)\.tsx?(")/g, "$1$2.js$3")
+    .replace(/(import\(")(\.\.?\/[^"]+)\.tsx?("\))/g, "$1$2.js$3");
   if (fixed !== source) writeFileSync(path, fixed);
 }

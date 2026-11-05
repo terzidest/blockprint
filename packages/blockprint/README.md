@@ -68,7 +68,7 @@ A common recipe — shared section chrome, deep-link anchors, and analytics attr
   registry={registry}
   wrapBlock={(node, entry) => (
     <section
-      id={entry.id ? String(entry.id) : undefined}   // anchor: /page#hero-1
+      id={entry.id != null ? String(entry.id) : undefined} // anchor: /page#hero-1
       data-block={entry.type}                        // analytics / e2e hooks
       className="mx-auto max-w-5xl px-6 py-10"
     >
